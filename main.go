@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	Width     = 600
-	Height    = 600
-	ColWidth  = 30
-	ColHeight = 30
+	Width           = 600
+	Height          = 600
+	ColWidth        = 30
+	ColHeight       = 30
+	GenLengthMillis = 500
 )
 
 // ex: grab a timer for updating in a concurrent go routine
@@ -51,7 +52,7 @@ func main() {
 	updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
 
 	go func() {
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(GenLengthMillis * time.Millisecond)
 		defer ticker.Stop()
 
 		for range ticker.C {
