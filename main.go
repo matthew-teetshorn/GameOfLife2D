@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -32,8 +33,8 @@ type ChangeableImage interface {
 
 // Cell keeps track of wheter cell has been born/died between generations
 type Cell struct {
-	Previous int
-	Current  int
+	WasAlive bool
+	IsAlive  bool
 }
 
 func main() {
@@ -43,15 +44,24 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Conway's Game of Life")
 
-	// grid := createGrid()
-	// w.SetContent(grid)
-	// w.Resize(fyne.NewSize(600, 600))
-
 	gameGrid := createGrid(Width/ColWidth, Height/ColHeight)
 	gridRect := image.Rect(0, 0, Width, Height)
 	gridImage := image.NewNRGBA(gridRect)
 	gridRaster := canvas.NewRasterFromImage(gridImage)
 	updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			nextGeneration(&gameGrid)
+			fyne.Do(func() {
+				updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+				gridRaster.Refresh()
+			})
+		}
+	}()
 
 	w.SetContent(gridRaster)
 	w.Resize(fyne.NewSize(Width, Height))
@@ -59,6 +69,7 @@ func main() {
 	a.Run()
 }
 
+// createGrid creates the starting grid structure
 func createGrid(rows, cols int) [][]Cell {
 	grid := make([][]Cell, rows)
 
@@ -68,11 +79,7 @@ func createGrid(rows, cols int) [][]Cell {
 
 	for x := range rows {
 		for y := range cols {
-			if x%2 == y%2 {
-				grid[x][y] = Cell{Previous: 0, Current: 1}
-			} else {
-				grid[x][y] = Cell{Previous: 1, Current: 0}
-			}
+			grid[x][y] = Cell{WasAlive: true, IsAlive: false}
 		}
 	}
 
@@ -84,12 +91,12 @@ func createGrid(rows, cols int) [][]Cell {
 func updateImageGrid(gameGrid *[][]Cell, img ChangeableImage, alive, dead color.Color, cWidth, cHeight int) {
 	for r, row := range *gameGrid {
 		for c, cell := range row {
-			if cell.Current != cell.Previous {
+			if cell.IsAlive != cell.WasAlive {
 				colStart := cWidth * c
 				rowStart := cHeight * r
 				for x := colStart; x < colStart+cWidth; x++ {
 					for y := rowStart; y < rowStart+cHeight; y++ {
-						if cell.Current == 1 {
+						if cell.IsAlive {
 							img.Set(x, y, alive)
 						} else {
 							img.Set(x, y, dead)
@@ -97,6 +104,16 @@ func updateImageGrid(gameGrid *[][]Cell, img ChangeableImage, alive, dead color.
 					}
 				}
 			}
+		}
+	}
+}
+
+// nextGeneration calculates the next generation of cells based on specific rules
+func nextGeneration(gameGrid *[][]Cell) {
+	for r, row := range *gameGrid {
+		for c := range row {
+			(*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].IsAlive
+			(*gameGrid)[r][c].IsAlive = !(*gameGrid)[r][c].IsAlive
 		}
 	}
 }
