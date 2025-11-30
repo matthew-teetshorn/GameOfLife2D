@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -15,8 +16,8 @@ import (
 const (
 	Width            = 600
 	Height           = 600
-	ColWidth         = 15
-	ColHeight        = 15
+	ColWidth         = 30
+	ColHeight        = 30
 	GenLengthMillis  = 1500
 	ProgramIsRunning = true
 )
@@ -29,9 +30,8 @@ type ChangeableImage interface {
 
 // Cell keeps track of wheter cell has been born/died between generations
 type Cell struct {
-	WasAlive    bool
-	IsAlive     bool
-	WillBeAlive bool
+	WasAlive bool
+	IsAlive  bool
 }
 
 func main() {
@@ -92,9 +92,9 @@ func main() {
 		for range ticker.C {
 			if ProgramIsRunning {
 				nextGeneration(&gameGrid, &swapGrid)
-				temp := &gameGrid
+				temp := gameGrid
 				gameGrid = swapGrid
-				swapGrid = *temp
+				swapGrid = temp
 				fyne.Do(func() {
 					updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
 					canvasImage.Refresh()
@@ -165,6 +165,9 @@ func nextGeneration(currGrid, nextGrid *[][]Cell) {
 	for r, row := range *currGrid {
 		for c := range row {
 			count := countNeighbors(currGrid, r, c)
+			if count > 0 {
+				fmt.Printf("Cell: (%d, %d), count: %d\n", r, c, count)
+			}
 			currCell := (*currGrid)[r][c]
 			(*nextGrid)[r][c].WasAlive = currCell.IsAlive
 			if currCell.IsAlive {
@@ -194,6 +197,7 @@ func countNeighbors(gameGrid *[][]Cell, currRow, currCol int) int {
 			nextCol := currCol + dC
 			if nextRow >= 0 && nextRow < Height/ColHeight && nextCol >= 0 && nextCol < Width/ColWidth {
 				if (*gameGrid)[nextRow][nextCol].IsAlive {
+					fmt.Printf("Current Cell: (%d, %d) Neighbor.IsAlive: (%d, %d)\n", currRow, currCol, nextRow, nextCol)
 					count++
 				}
 			}
