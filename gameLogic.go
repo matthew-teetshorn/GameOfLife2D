@@ -32,7 +32,7 @@ func countNeighbors(gameGrid *[][]Cell, currRow, currCol int) int {
 			}
 			nextRow := currRow + dR
 			nextCol := currCol + dC
-			if nextRow >= 0 && nextRow < gHeight/ColHeight && nextCol >= 0 && nextCol < gWidth/ColWidth {
+			if nextRow >= 0 && nextRow < int(gHeight/ColHeight) && nextCol >= 0 && nextCol < int(gWidth/ColWidth) {
 				if (*gameGrid)[nextRow][nextCol].IsAlive {
 					count++
 				}

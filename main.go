@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -13,17 +14,21 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const (
-	gWidth          = 600
-	gHeight         = 600
-	screenWidth     = 800
-	screenHeight    = 600
-	ColWidth        = 30
-	ColHeight       = 30
-	GenLengthMillis = 500
+var (
+	gWidthInit    float32 = 800
+	gHeightInit   float32 = 600
+	screenWidth   float32 = 800
+	screenHeight  float32 = 600
+	ColWidth      float32 = 60
+	ColHeight     float32 = 60
+	numCellWidth  int     = int(gWidthInit / ColWidth)
+	numCellHeight int     = int(gHeightInit / ColHeight)
+	// Truncating the grid width to a multiple of even cells
+	gWidth           float32 = float32(numCellWidth) * ColWidth
+	gHeight          float32 = float32(numCellHeight) * ColHeight
+	GenLengthMillis          = 500
+	ProgramIsRunning         = false
 )
-
-var ProgramIsRunning = false
 
 // ChangeableImage defines an interface for image types that can be modified using Set().
 type ChangeableImage interface {
@@ -38,6 +43,8 @@ type Cell struct {
 }
 
 func main() {
+	fmt.Println(gWidth, gHeight)
+	fmt.Println(numCellWidth, numCellHeight)
 	aliveColor := color.RGBA{R: 200, G: 200, B: 200, A: 255}
 	deadColor := color.RGBA{R: 20, G: 20, B: 20, A: 255}
 	gridLineColor := color.RGBA{R: 0, G: 125, B: 125, A: 255}
@@ -47,18 +54,18 @@ func main() {
 	w := a.NewWindow("Conway's Game of Life")
 
 	// The grid ([][]Cell) slice that contains the actual game grid
-	gameGrid := createGrid(gWidth/ColWidth, gHeight/ColHeight)
-	swapGrid := createGrid(gWidth/ColWidth, gHeight/ColHeight)
+	gameGrid := createGrid(numCellHeight, numCellWidth)
+	swapGrid := createGrid(numCellHeight, numCellWidth)
 
 	// The boundary box for our grid image
-	gridRect := image.Rect(0, 0, gWidth+1, gHeight+1)
+	gridRect := image.Rect(0, 0, int(gWidth)+1, int(gHeight)+1)
 	// The image that we draw the game cells onto as pixels
 	gridImage := image.NewNRGBA(gridRect)
-	updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+	updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, int(ColWidth), int(ColHeight))
 
 	// Create an image overlay for the grid lines
 	gridLinesImage := image.NewNRGBA(gridRect)
-	createGridLines(gridLinesImage, gridLineColor, seeThrough, gWidth+1, gHeight+1, ColWidth, ColHeight)
+	createGridLines(gridLinesImage, gridLineColor, seeThrough, int(gWidth)+1, int(gHeight)+1, int(ColWidth), int(ColHeight))
 
 	// Fyne cavnas element for containing grid lines
 	canvasGridLines := canvas.NewImageFromImage(gridLinesImage)
@@ -80,7 +87,7 @@ func main() {
 		if ok {
 			gameGrid[r][c].WasAlive = gameGrid[r][c].IsAlive
 			gameGrid[r][c].IsAlive = !gameGrid[r][c].IsAlive
-			updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+			updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, int(ColWidth), int(ColHeight))
 			canvasImage.Refresh()
 		}
 	})
@@ -89,7 +96,7 @@ func main() {
 
 	// Spawn go routine that handles the game update tasks on a time tick
 	go func() {
-		ticker := time.NewTicker(GenLengthMillis * time.Millisecond)
+		ticker := time.NewTicker(time.Duration(GenLengthMillis) * time.Millisecond)
 		defer ticker.Stop()
 
 		for range ticker.C {
@@ -99,7 +106,7 @@ func main() {
 				gameGrid = swapGrid
 				swapGrid = temp
 				fyne.Do(func() {
-					updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+					updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, int(ColWidth), int(ColHeight))
 					canvasImage.Refresh()
 				})
 			}
