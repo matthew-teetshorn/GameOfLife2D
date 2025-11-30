@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	gWidthInit    float32 = 800
+	gWidthInit    float32 = 600
 	gHeightInit   float32 = 600
 	screenWidth   float32 = 800
 	screenHeight  float32 = 600
@@ -85,6 +85,7 @@ func main() {
 		mouseX, mouseY := pe.Position.X, pe.Position.Y
 		r, c, ok := pixelToGridSquare(mouseX, mouseY, cWidth, cHeight)
 		if ok {
+			fmt.Println(canvasImage.Size())
 			gameGrid[r][c].WasAlive = gameGrid[r][c].IsAlive
 			gameGrid[r][c].IsAlive = !gameGrid[r][c].IsAlive
 			updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, int(ColWidth), int(ColHeight))
