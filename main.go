@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -8,6 +9,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 )
 
 const (
@@ -17,14 +20,6 @@ const (
 	ColHeight       = 30
 	GenLengthMillis = 500
 )
-
-// ex: grab a timer for updating in a concurrent go routine
-// go func() {
-// 	count := 0
-// 	for range time.Tick(time.Second) {
-// 		count++
-// 	}
-// }()
 
 // ChangeableImage defines an interface for image types that can be modified using Set().
 type ChangeableImage interface {
@@ -41,16 +36,38 @@ type Cell struct {
 func main() {
 	aliveColor := color.RGBA{R: 200, G: 200, B: 200, A: 255}
 	deadColor := color.RGBA{R: 20, G: 20, B: 20, A: 255}
+	gridLineColor := color.RGBA{R: 0, G: 125, B: 125, A: 255}
+	seeThrough := color.RGBA{R: 0, G: 0, B: 0, A: 0}
 
 	a := app.New()
 	w := a.NewWindow("Conway's Game of Life")
 
+	// The grid ([][]Cell) slice that contains the actual game grid
 	gameGrid := createGrid(Width/ColWidth, Height/ColHeight)
-	gridRect := image.Rect(0, 0, Width, Height)
+
+	// The boundary box for our grid image
+	gridRect := image.Rect(0, 0, Width+1, Height+1)
+	// The image that we draw the game cells onto as pixels
 	gridImage := image.NewNRGBA(gridRect)
-	gridRaster := canvas.NewRasterFromImage(gridImage)
 	updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
 
+	// Create an image overlay for the grid lines
+	gridLinesImage := image.NewNRGBA(gridRect)
+	createGridLines(gridLinesImage, gridLineColor, seeThrough, Width+1, Height+1, ColWidth, ColHeight)
+
+	// Fyne cavnas element for containing grid lines
+	canvasGridLines := canvas.NewImageFromImage(gridLinesImage)
+	canvasGridLines.FillMode = canvas.ImageFillContain
+	// Fyne canvas element for containing the image
+	canvasImage := canvas.NewImageFromImage(gridImage)
+	// Maintain aspect ratio of image on window resize
+	canvasImage.FillMode = canvas.ImageFillContain
+	// Creating an overlay region to handle mouse click events
+	overlayWidget := NewInvisibleButton(handleGridClick)
+	// Fyne container for holding all items for our grid
+	gridContainer := container.New(layout.NewStackLayout(), canvasImage, canvasGridLines, overlayWidget)
+
+	// Spawn go routine that handles the game update tasks on a time tick
 	go func() {
 		ticker := time.NewTicker(GenLengthMillis * time.Millisecond)
 		defer ticker.Stop()
@@ -59,12 +76,12 @@ func main() {
 			nextGeneration(&gameGrid)
 			fyne.Do(func() {
 				updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
-				gridRaster.Refresh()
+				canvasImage.Refresh()
 			})
 		}
 	}()
 
-	w.SetContent(gridRaster)
+	w.SetContent(gridContainer)
 	w.Resize(fyne.NewSize(Width, Height))
 	w.Show()
 	a.Run()
@@ -80,11 +97,27 @@ func createGrid(rows, cols int) [][]Cell {
 
 	for x := range rows {
 		for y := range cols {
-			grid[x][y] = Cell{WasAlive: true, IsAlive: false}
+			if x%2 == y%2 {
+				grid[x][y] = Cell{WasAlive: true, IsAlive: false}
+			} else {
+				grid[x][y] = Cell{WasAlive: false, IsAlive: true}
+			}
 		}
 	}
 
 	return grid
+}
+
+func createGridLines(img ChangeableImage, lColor, cColor color.Color, sWidth, sHeight, cWidth, cHeight int) {
+	for x := range sWidth {
+		for y := range sHeight {
+			if x%cWidth == 0 || y%cHeight == 0 {
+				img.Set(x, y, lColor)
+			} else {
+				img.Set(x, y, cColor)
+			}
+		}
+	}
 }
 
 // updateImageGrid takes an image grid and updates the cell's pixel colors for cells which have been
@@ -113,8 +146,22 @@ func updateImageGrid(gameGrid *[][]Cell, img ChangeableImage, alive, dead color.
 func nextGeneration(gameGrid *[][]Cell) {
 	for r, row := range *gameGrid {
 		for c := range row {
-			(*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].IsAlive
-			(*gameGrid)[r][c].IsAlive = !(*gameGrid)[r][c].IsAlive
+			(*gameGrid)[r][c].WasAlive = false
+			(*gameGrid)[r][c].IsAlive = false
+			// (*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].IsAlive
+			// (*gameGrid)[r][c].IsAlive = !(*gameGrid)[r][c].IsAlive
 		}
 	}
+}
+
+func handleGridClick(pe *fyne.PointEvent) {
+	x, y := int(pe.Position.X), int(pe.Position.Y)
+	r, c := pixelToGridSquare(x, y)
+	fmt.Println(x, y)
+	fmt.Println(r, c)
+}
+
+func pixelToGridSquare(x, y int) (r, c int) {
+	r, c = x/ColWidth, y/ColHeight
+	return
 }
