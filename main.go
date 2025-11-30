@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -72,7 +71,12 @@ func main() {
 		cHeight := gridContainer.Size().Height
 		mouseX, mouseY := pe.Position.X, pe.Position.Y
 		r, c, ok := pixelToGridSquare(mouseX, mouseY, cWidth, cHeight)
-		fmt.Println(r, c, ok)
+		if ok {
+			gameGrid[r][c].WasAlive = gameGrid[r][c].IsAlive
+			gameGrid[r][c].IsAlive = !gameGrid[r][c].IsAlive
+			updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+			canvasImage.Refresh()
+		}
 	})
 
 	gridContainer.Add(overlayWidget)
@@ -152,8 +156,8 @@ func updateImageGrid(gameGrid *[][]Cell, img ChangeableImage, alive, dead color.
 func nextGeneration(gameGrid *[][]Cell) {
 	for r, row := range *gameGrid {
 		for c := range row {
-			(*gameGrid)[r][c].WasAlive = false
-			(*gameGrid)[r][c].IsAlive = false
+			(*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].WasAlive
+			(*gameGrid)[r][c].IsAlive = (*gameGrid)[r][c].IsAlive
 			// (*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].IsAlive
 			// (*gameGrid)[r][c].IsAlive = !(*gameGrid)[r][c].IsAlive
 		}
@@ -174,8 +178,8 @@ func pixelToGridSquare(x, y, sWidth, sHeight float32) (r, c int, isValid bool) {
 			return 0, 0, false
 		}
 		scale = sWidth / Width
-		r = int(x / (ColWidth * scale))
-		c = int((y - margin) / (ColHeight * scale))
+		c = int(x / (ColWidth * scale))
+		r = int((y - margin) / (ColHeight * scale))
 	} else {
 		// If we're outside the grid it's invalid
 		margin = (sWidth - dimension) / 2
@@ -183,8 +187,8 @@ func pixelToGridSquare(x, y, sWidth, sHeight float32) (r, c int, isValid bool) {
 			return 0, 0, false
 		}
 		scale = sHeight / Height
-		r = int((x - margin) / (ColWidth * scale))
-		c = int(y / (ColHeight * scale))
+		c = int((x - margin) / (ColWidth * scale))
+		r = int(y / (ColHeight * scale))
 	}
 
 	return
