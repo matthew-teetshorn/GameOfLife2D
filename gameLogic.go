@@ -1,15 +1,10 @@
 package main
 
-import "fmt"
-
 // nextGeneration calculates the next generation of cells based on specific rules
 func nextGeneration(currGrid, nextGrid *[][]Cell) {
 	for r, row := range *currGrid {
 		for c := range row {
 			count := countNeighbors(currGrid, r, c)
-			if count > 0 {
-				fmt.Printf("Cell: (%d, %d), count: %d\n", r, c, count)
-			}
 			currCell := (*currGrid)[r][c]
 			(*nextGrid)[r][c].WasAlive = currCell.IsAlive
 			if currCell.IsAlive {
@@ -39,7 +34,6 @@ func countNeighbors(gameGrid *[][]Cell, currRow, currCol int) int {
 			nextCol := currCol + dC
 			if nextRow >= 0 && nextRow < Height/ColHeight && nextCol >= 0 && nextCol < Width/ColWidth {
 				if (*gameGrid)[nextRow][nextCol].IsAlive {
-					fmt.Printf("Current Cell: (%d, %d) Neighbor.IsAlive: (%d, %d)\n", currRow, currCol, nextRow, nextCol)
 					count++
 				}
 			}
