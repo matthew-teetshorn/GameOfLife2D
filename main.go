@@ -10,16 +10,18 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 const (
-	Width            = 600
-	Height           = 600
-	ColWidth         = 30
-	ColHeight        = 30
-	GenLengthMillis  = 1500
-	ProgramIsRunning = true
+	Width           = 600
+	Height          = 600
+	ColWidth        = 30
+	ColHeight       = 30
+	GenLengthMillis = 500
 )
+
+var ProgramIsRunning = false
 
 // ChangeableImage defines an interface for image types that can be modified using Set().
 type ChangeableImage interface {
@@ -102,7 +104,23 @@ func main() {
 		}
 	}()
 
-	w.SetContent(gridContainer)
+	infoForm := widget.NewForm()
+	runButton := widget.NewButton("Run Simulation", nil)
+
+	runButton.OnTapped = func() {
+		ProgramIsRunning = !ProgramIsRunning
+		if ProgramIsRunning {
+			runButton.SetText("Stop Simulation")
+		} else {
+			runButton.SetText("Run Simulation")
+		}
+	}
+
+	vSplitContainer := container.NewVSplit(infoForm, runButton)
+	vSplitContainer.SetOffset(.75)
+	hSplitContainer := container.NewHSplit(vSplitContainer, gridContainer)
+	hSplitContainer.SetOffset(.33)
+	w.SetContent(hSplitContainer)
 	w.Resize(fyne.NewSize(Width, Height))
 	w.Show()
 	a.Run()
