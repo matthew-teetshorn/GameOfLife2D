@@ -16,7 +16,7 @@ func pixelToGridSquare(x, y, sWidth, sHeight float32) (r, c int, isValid bool) {
 		if y < margin || y > sHeight-margin {
 			return 0, 0, false
 		}
-		scale = sWidth / Width
+		scale = sWidth / gWidth
 		c = int(x / (ColWidth * scale))
 		r = int((y - margin) / (ColHeight * scale))
 	} else {
@@ -25,7 +25,7 @@ func pixelToGridSquare(x, y, sWidth, sHeight float32) (r, c int, isValid bool) {
 		if x < margin || x > sWidth-margin {
 			return 0, 0, false
 		}
-		scale = sHeight / Height
+		scale = sHeight / gHeight
 		c = int((x - margin) / (ColWidth * scale))
 		r = int(y / (ColHeight * scale))
 	}

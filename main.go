@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	Width           = 600
-	Height          = 600
+	gWidth          = 600
+	gHeight         = 600
+	screenWidth     = 800
+	screenHeight    = 600
 	ColWidth        = 30
 	ColHeight       = 30
 	GenLengthMillis = 500
@@ -45,18 +47,18 @@ func main() {
 	w := a.NewWindow("Conway's Game of Life")
 
 	// The grid ([][]Cell) slice that contains the actual game grid
-	gameGrid := createGrid(Width/ColWidth, Height/ColHeight)
-	swapGrid := createGrid(Width/ColWidth, Height/ColHeight)
+	gameGrid := createGrid(gWidth/ColWidth, gHeight/ColHeight)
+	swapGrid := createGrid(gWidth/ColWidth, gHeight/ColHeight)
 
 	// The boundary box for our grid image
-	gridRect := image.Rect(0, 0, Width+1, Height+1)
+	gridRect := image.Rect(0, 0, gWidth+1, gHeight+1)
 	// The image that we draw the game cells onto as pixels
 	gridImage := image.NewNRGBA(gridRect)
 	updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
 
 	// Create an image overlay for the grid lines
 	gridLinesImage := image.NewNRGBA(gridRect)
-	createGridLines(gridLinesImage, gridLineColor, seeThrough, Width+1, Height+1, ColWidth, ColHeight)
+	createGridLines(gridLinesImage, gridLineColor, seeThrough, gWidth+1, gHeight+1, ColWidth, ColHeight)
 
 	// Fyne cavnas element for containing grid lines
 	canvasGridLines := canvas.NewImageFromImage(gridLinesImage)
@@ -119,9 +121,9 @@ func main() {
 	vSplitContainer := container.NewVSplit(infoForm, runButton)
 	vSplitContainer.SetOffset(.75)
 	hSplitContainer := container.NewHSplit(vSplitContainer, gridContainer)
-	hSplitContainer.SetOffset(.33)
+	hSplitContainer.SetOffset(.25)
 	w.SetContent(hSplitContainer)
-	w.Resize(fyne.NewSize(Width, Height))
+	w.Resize(fyne.NewSize(screenWidth, screenHeight))
 	w.Show()
 	a.Run()
 }
