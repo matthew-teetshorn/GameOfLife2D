@@ -97,11 +97,7 @@ func createGrid(rows, cols int) [][]Cell {
 
 	for x := range rows {
 		for y := range cols {
-			if x%2 == y%2 {
-				grid[x][y] = Cell{WasAlive: true, IsAlive: false}
-			} else {
-				grid[x][y] = Cell{WasAlive: false, IsAlive: true}
-			}
+			grid[x][y] = Cell{WasAlive: true, IsAlive: false}
 		}
 	}
 
