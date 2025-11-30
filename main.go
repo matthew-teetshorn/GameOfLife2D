@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	Width           = 600
-	Height          = 600
-	ColWidth        = 30
-	ColHeight       = 30
-	GenLengthMillis = 500
+	Width            = 600
+	Height           = 600
+	ColWidth         = 15
+	ColHeight        = 15
+	GenLengthMillis  = 1500
+	ProgramIsRunning = true
 )
 
 // ChangeableImage defines an interface for image types that can be modified using Set().
@@ -28,8 +29,9 @@ type ChangeableImage interface {
 
 // Cell keeps track of wheter cell has been born/died between generations
 type Cell struct {
-	WasAlive bool
-	IsAlive  bool
+	WasAlive    bool
+	IsAlive     bool
+	WillBeAlive bool
 }
 
 func main() {
@@ -43,6 +45,7 @@ func main() {
 
 	// The grid ([][]Cell) slice that contains the actual game grid
 	gameGrid := createGrid(Width/ColWidth, Height/ColHeight)
+	swapGrid := createGrid(Width/ColWidth, Height/ColHeight)
 
 	// The boundary box for our grid image
 	gridRect := image.Rect(0, 0, Width+1, Height+1)
@@ -87,11 +90,16 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			nextGeneration(&gameGrid)
-			fyne.Do(func() {
-				updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
-				canvasImage.Refresh()
-			})
+			if ProgramIsRunning {
+				nextGeneration(&gameGrid, &swapGrid)
+				temp := &gameGrid
+				gameGrid = swapGrid
+				swapGrid = *temp
+				fyne.Do(func() {
+					updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, ColWidth, ColHeight)
+					canvasImage.Refresh()
+				})
+			}
 		}
 	}()
 
@@ -153,15 +161,46 @@ func updateImageGrid(gameGrid *[][]Cell, img ChangeableImage, alive, dead color.
 }
 
 // nextGeneration calculates the next generation of cells based on specific rules
-func nextGeneration(gameGrid *[][]Cell) {
-	for r, row := range *gameGrid {
+func nextGeneration(currGrid, nextGrid *[][]Cell) {
+	for r, row := range *currGrid {
 		for c := range row {
-			(*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].WasAlive
-			(*gameGrid)[r][c].IsAlive = (*gameGrid)[r][c].IsAlive
-			// (*gameGrid)[r][c].WasAlive = (*gameGrid)[r][c].IsAlive
-			// (*gameGrid)[r][c].IsAlive = !(*gameGrid)[r][c].IsAlive
+			count := countNeighbors(currGrid, r, c)
+			currCell := (*currGrid)[r][c]
+			(*nextGrid)[r][c].WasAlive = currCell.IsAlive
+			if currCell.IsAlive {
+				if count < 2 || count > 3 {
+					(*nextGrid)[r][c].IsAlive = false
+				} else {
+					(*nextGrid)[r][c].IsAlive = true
+				}
+			} else if count == 3 {
+				(*nextGrid)[r][c].IsAlive = true
+			} else {
+				(*nextGrid)[r][c].IsAlive = false
+			}
 		}
 	}
+}
+
+func countNeighbors(gameGrid *[][]Cell, currRow, currCol int) int {
+	count := 0
+
+	for dR := -1; dR <= 1; dR++ {
+		for dC := -1; dC <= 1; dC++ {
+			if dR == 0 && dC == 0 {
+				continue
+			}
+			nextRow := currRow + dR
+			nextCol := currCol + dC
+			if nextRow >= 0 && nextRow < Height/ColHeight && nextCol >= 0 && nextCol < Width/ColWidth {
+				if (*gameGrid)[nextRow][nextCol].IsAlive {
+					count++
+				}
+			}
+		}
+	}
+
+	return count
 }
 
 func pixelToGridSquare(x, y, sWidth, sHeight float32) (r, c int, isValid bool) {
