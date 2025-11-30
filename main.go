@@ -62,10 +62,20 @@ func main() {
 	canvasImage := canvas.NewImageFromImage(gridImage)
 	// Maintain aspect ratio of image on window resize
 	canvasImage.FillMode = canvas.ImageFillContain
-	// Creating an overlay region to handle mouse click events
-	overlayWidget := NewInvisibleButton(handleGridClick)
 	// Fyne container for holding all items for our grid
-	gridContainer := container.New(layout.NewStackLayout(), canvasImage, canvasGridLines, overlayWidget)
+	gridContainer := container.New(layout.NewStackLayout(), canvasImage, canvasGridLines)
+	// Creating an overlay region to handle mouse click events
+	// We are creating a closure over the anonymous function so it has gridContainer in scope
+	overlayWidget := NewInvisibleButton(func(pe *fyne.PointEvent) {
+		// Get the current size of the container
+		cWidth := gridContainer.Size().Width
+		cHeight := gridContainer.Size().Height
+		mouseX, mouseY := pe.Position.X, pe.Position.Y
+		r, c, ok := pixelToGridSquare(mouseX, mouseY, cWidth, cHeight)
+		fmt.Println(r, c, ok)
+	})
+
+	gridContainer.Add(overlayWidget)
 
 	// Spawn go routine that handles the game update tasks on a time tick
 	go func() {
@@ -150,14 +160,32 @@ func nextGeneration(gameGrid *[][]Cell) {
 	}
 }
 
-func handleGridClick(pe *fyne.PointEvent) {
-	x, y := int(pe.Position.X), int(pe.Position.Y)
-	r, c := pixelToGridSquare(x, y)
-	fmt.Println(x, y)
-	fmt.Println(r, c)
-}
+func pixelToGridSquare(x, y, sWidth, sHeight float32) (r, c int, isValid bool) {
+	// Grid is square and contained within the lesser of sWidth and sHeight
+	dimension := min(sWidth, sHeight)
+	isValid = true
+	margin := float32(0.0)
+	scale := float32(0.0)
 
-func pixelToGridSquare(x, y int) (r, c int) {
-	r, c = x/ColWidth, y/ColHeight
+	if dimension == sWidth {
+		// If we're outside the grid it's invalid
+		margin = (sHeight - dimension) / 2
+		if y < margin || y > sHeight-margin {
+			return 0, 0, false
+		}
+		scale = sWidth / Width
+		r = int(x / (ColWidth * scale))
+		c = int((y - margin) / (ColHeight * scale))
+	} else {
+		// If we're outside the grid it's invalid
+		margin = (sWidth - dimension) / 2
+		if x < margin || x > sWidth-margin {
+			return 0, 0, false
+		}
+		scale = sHeight / Height
+		r = int((x - margin) / (ColWidth * scale))
+		c = int(y / (ColHeight * scale))
+	}
+
 	return
 }
