@@ -1,4 +1,4 @@
-# GameOfLife2D
+# Game of Life 2D
 
 This is a project written in [Golang](https://go.dev/) in order to practice creating a GUI application utilizing Go and [Fyne](https://fyne.io/)
 
