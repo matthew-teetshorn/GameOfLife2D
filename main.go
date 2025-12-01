@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -19,8 +18,8 @@ var (
 	gHeightInit   float32 = 600
 	screenWidth   float32 = 800
 	screenHeight  float32 = 600
-	ColWidth      float32 = 60
-	ColHeight     float32 = 60
+	ColWidth      float32 = 15
+	ColHeight     float32 = 15
 	numCellWidth  int     = int(gWidthInit / ColWidth)
 	numCellHeight int     = int(gHeightInit / ColHeight)
 	// Truncating the grid width to a multiple of even cells
@@ -43,8 +42,6 @@ type Cell struct {
 }
 
 func main() {
-	fmt.Println(gWidth, gHeight)
-	fmt.Println(numCellWidth, numCellHeight)
 	aliveColor := color.RGBA{R: 200, G: 200, B: 200, A: 255}
 	deadColor := color.RGBA{R: 20, G: 20, B: 20, A: 255}
 	gridLineColor := color.RGBA{R: 0, G: 125, B: 125, A: 255}
@@ -85,7 +82,6 @@ func main() {
 		mouseX, mouseY := pe.Position.X, pe.Position.Y
 		r, c, ok := pixelToGridSquare(mouseX, mouseY, cWidth, cHeight)
 		if ok {
-			fmt.Println(canvasImage.Size())
 			gameGrid[r][c].WasAlive = gameGrid[r][c].IsAlive
 			gameGrid[r][c].IsAlive = !gameGrid[r][c].IsAlive
 			updateImageGrid(&gameGrid, gridImage, aliveColor, deadColor, int(ColWidth), int(ColHeight))
@@ -114,9 +110,22 @@ func main() {
 		}
 	}()
 
-	infoForm := widget.NewForm()
-	runButton := widget.NewButton("Run Simulation", nil)
+	// titleLabel := widget.NewLabel("Conway's Game of Life")
+	titleText := canvas.NewText("Conway's Game of Life", color.White)
+	titleText.TextSize = 25
+	titleContainer := container.NewCenter(titleText)
+	bodyText := `
+This is a version of the classic generational simulator.
 
+Feel free to click on the grid to create some living cells in your desired pattern.
+
+When you are satisfied, click Run Simulation below to begin the simulation.`
+	bodyTextT := canvas.NewText(bodyText, color.White)
+	bodyTextT.TextSize = 12
+	bodyTextWidget := widget.NewLabel(bodyText)
+	bodyTextWidget.Wrapping = fyne.TextWrapWord
+
+	runButton := widget.NewButton("Run Simulation", nil)
 	runButton.OnTapped = func() {
 		ProgramIsRunning = !ProgramIsRunning
 		if ProgramIsRunning {
@@ -126,11 +135,14 @@ func main() {
 		}
 	}
 
-	vSplitContainer := container.NewVSplit(infoForm, runButton)
-	vSplitContainer.SetOffset(.75)
-	hSplitContainer := container.NewHSplit(vSplitContainer, gridContainer)
-	hSplitContainer.SetOffset(.25)
-	w.SetContent(hSplitContainer)
+	leftPanelContainer := container.NewVBox(titleContainer, bodyTextWidget, layout.NewSpacer(), runButton)
+	// vSplitContainer := container.NewVSplit(controlPanelContainer, runButton)
+	// vSplitContainer.SetOffset(.75)
+	// mainContainer := container.NewHBox(leftPanelContainer, gridContainer)
+	mainContainer := container.NewHSplit(leftPanelContainer, gridContainer)
+	mainContainer.SetOffset(.25)
+	// w.SetContent(hSplitContainer)
+	w.SetContent(mainContainer)
 	w.Resize(fyne.NewSize(screenWidth, screenHeight))
 	w.Show()
 	a.Run()
