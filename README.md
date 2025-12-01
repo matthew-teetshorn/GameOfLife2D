@@ -47,4 +47,4 @@ screenWidth/screenHeight establish an initial ratio of the size of the full wind
 - [ ] Add hooks in the UI to allow modification of the simulation paramaters during runtime rather then through the source code
 - [ ] Add pregenerated shapes as an option to bypass manual entry
 - [ ] Add an image upload functionality to allow bitmaps to be brought in as grid designs
-- [ ] Modify the interface to clean up state passing to functions. Combination of global state vars function params is a bit messy.
+- [ ] Modify the interface to clean up state passing to functions. Combination of global state vars vs. function params is a bit messy.
