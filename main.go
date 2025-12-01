@@ -14,19 +14,19 @@ import (
 )
 
 var (
-	gWidthInit    float32 = 600
-	gHeightInit   float32 = 600
-	screenWidth   float32 = 800
-	screenHeight  float32 = 600
-	ColWidth      float32 = 15
-	ColHeight     float32 = 15
-	numCellWidth  int     = int(gWidthInit / ColWidth)
-	numCellHeight int     = int(gHeightInit / ColHeight)
-	// Truncating the grid width to a multiple of even cells
-	gWidth           float32 = float32(numCellWidth) * ColWidth
-	gHeight          float32 = float32(numCellHeight) * ColHeight
+	gWidthInit       float32 = 600
+	gHeightInit      float32 = 600
+	screenWidth      float32 = 800
+	screenHeight     float32 = 600
+	ColWidth         float32 = 15
+	ColHeight        float32 = 15
 	GenLengthMillis          = 500
 	ProgramIsRunning         = false
+	numCellWidth     int     = int(gWidthInit / ColWidth)
+	numCellHeight    int     = int(gHeightInit / ColHeight)
+	// Truncating the grid width to a multiple of even cells
+	gWidth  float32 = float32(numCellWidth) * ColWidth
+	gHeight float32 = float32(numCellHeight) * ColHeight
 )
 
 // ChangeableImage defines an interface for image types that can be modified using Set().
